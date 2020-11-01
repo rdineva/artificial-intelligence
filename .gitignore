@@ -1,0 +1,8 @@
+*.class
+*.jar
+out/
+.idea/
+.idea_modules/
+*.iml
+*.ipr
+*.iws
