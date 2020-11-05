@@ -7,9 +7,10 @@ import java.util.HashMap;
 public class Node {
 
   public String move;
-  private Node parent;
+  public Node parent;
   public Board board, goal;
   public int g;
+  public int manhattanDistance;
 
   public Node(Board board, Node parent, Board goal, int g, String move) {
     this.board = board;
@@ -17,10 +18,11 @@ public class Node {
     this.goal = goal;
     this.g = g;
     this.move = move;
+    this.manhattanDistance = this.manhattanDistance();
   }
 
   public int f() {
-    return this.g + this.manhattanDistance();
+    return this.g + this.manhattanDistance;
   }
 
   public int manhattanDistance() {

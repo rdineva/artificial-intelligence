@@ -1,6 +1,9 @@
 package com.npuzzle;
 
 import java.util.ArrayList;
+import java.util.PriorityQueue;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class Solver {
 
@@ -13,41 +16,52 @@ public class Solver {
 
   public Node ida() {
     int bound = this.start.f();
-    ArrayList<Node> path = new ArrayList<>();
-    path.add(0, this.start);
-
     int nextBound;
-    while (true) {
-      nextBound = search(path, bound);
 
-      if (nextBound == 0) return path.get(path.size() - 1);
+    while (true) {
+      PriorityQueue<Node> queue = new PriorityQueue<>(new Compare());
+      ArrayList<Node> path = new ArrayList<>();
+      path.add(0, this.start);
+      nextBound = search(path, queue, bound);
+
+      if (nextBound == 0) return queue.poll();
 
       bound = nextBound;
     }
   }
 
-  public int search(ArrayList<Node> path, int bound) {
+  public int search(ArrayList<Node> path, PriorityQueue<Node> queue, int bound) {
     Node currentNode = path.get(path.size() - 1);
 
-    if (currentNode.f() > bound) return currentNode.f();
-    if (isGoal(currentNode)) return 0;
+    if (currentNode.f() > bound) {
+      queue.add(currentNode);
+      return currentNode.f();
+    }
 
-    int minF = Integer.MAX_VALUE;
+    if (isGoal(currentNode)) {
+      queue.clear();
+      queue.add(currentNode);
+      return 0;
+    }
+
     ArrayList<Node> neighbors = currentNode.neighbors();
 
     for (Node neighbor: neighbors) {
       if (!path.contains(neighbor)) {
-        path.add(neighbor);
+        if (currentNode.parent != null && currentNode.parent.board.isEqual(neighbor.board)) continue;
 
-        int nextMinF = search(path, bound);
-        if (nextMinF == 0) return 0;
-        if (nextMinF < minF) minF = nextMinF;
+        path.add(neighbor);
+        int result = search(path, queue, bound);
+
+        if (result == 0) {
+          return 0;
+        }
 
         path.remove(path.size() - 1);
       }
     }
 
-    return minF;
+    return queue.peek().f();
   }
 
   public boolean isGoal(Node node) {
@@ -64,7 +78,34 @@ public class Solver {
     return this.start.board.size();
   }
 
-  /*
-    public boolean isSolvable()
-  */
+  public boolean isSolvable() {
+    int n = this.size();
+    boolean isSolvable;
+    int inversions = this.getInversions();
+
+    if (n % 2 == 0) {
+      isSolvable = (inversions + this.start.board.getZeroPosition().get("row")) % 2 != 0;
+    } else {
+      isSolvable = inversions % 2 == 0;
+    }
+
+    return isSolvable;
+  }
+
+  private int getInversions() {
+    int count = 0;
+    int n = this.size() * this.size() - 1;
+    int[] startTiles = Stream.of(this.start.board.tiles)
+            .flatMapToInt(IntStream::of)
+            .filter(number -> number != 0)
+            .toArray();
+
+    for (int i = 0; i < n; i++) {
+      for (int j = i + 1; j < n; j++) {
+        if (startTiles[i] > startTiles[j]) count++;
+      }
+    }
+
+    return count;
+  }
 }

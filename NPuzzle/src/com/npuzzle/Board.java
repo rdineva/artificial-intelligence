@@ -34,21 +34,21 @@ public class Board {
 
     HashMap<String, Integer> leftCoordinates = new HashMap<>();
     leftCoordinates.put("row", 0);
-    leftCoordinates.put("col", -1);
+    leftCoordinates.put("col", 1);
     coordinates.put("left", leftCoordinates);
 
     HashMap<String, Integer> rightCoordinates = new HashMap<>();
     rightCoordinates.put("row", 0);
-    rightCoordinates.put("col", 1);
+    rightCoordinates.put("col", -1);
     coordinates.put("right", rightCoordinates);
 
     HashMap<String, Integer> upCoordinates = new HashMap<>();
-    upCoordinates.put("row", -1);
+    upCoordinates.put("row", 1);
     upCoordinates.put("col", 0);
     coordinates.put("up", upCoordinates);
 
     HashMap<String, Integer> downCoordinates = new HashMap<>();
-    downCoordinates.put("row", 1);
+    downCoordinates.put("row", -1);
     downCoordinates.put("col", 0);
     coordinates.put("down", downCoordinates);
 
@@ -75,8 +75,14 @@ public class Board {
     return neighbor;
   }
 
-  private boolean zeroInsideBoard(int row, int col) {
-    return row >= 0 && row < this.size() && col >= 0 && col < this.size();
+  public boolean isEqual(Board board) {
+    for (int row = 0; row < this.size(); row++) {
+      for (int col = 0; col < this.size(); col++) {
+        if (this.tileAt(row, col) != board.tileAt(row, col)) return false;
+      }
+    }
+
+    return true;
   }
 
   public int tileAt(int row, int col) {
@@ -87,7 +93,11 @@ public class Board {
     this.tiles[row][col] = tile;
   }
 
-  private HashMap<String, Integer> getZeroPosition() {
+  private boolean zeroInsideBoard(int row, int col) {
+    return row >= 0 && row < this.size() && col >= 0 && col < this.size();
+  }
+
+  public HashMap<String, Integer> getZeroPosition() {
     HashMap<String, Integer> coordinates = new HashMap<>();
 
     for (int row = 0; row < this.size(); row++) {
@@ -101,16 +111,6 @@ public class Board {
     }
 
     return coordinates;
-  }
-
-  public void print() {
-    for (int row = 0; row < this.size(); row++) {
-      for (int col = 0; col < this.size(); col++) {
-        System.out.print(this.tileAt(row, col) + " ");
-      }
-
-      System.out.print("\n");
-    }
   }
 }
 
