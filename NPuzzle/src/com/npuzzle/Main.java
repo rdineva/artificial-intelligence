@@ -34,11 +34,13 @@ public class Main {
         System.out.println("Time elapsed: " + timeElapsed);
       }
 
-      System.out.println("Moves towards solution: " + solutionNode.g);
+      System.out.println(solutionNode.g);
       ArrayList<Node> pathToSolution = solutionNode.getPathToRoot();
       pathToSolution.forEach(node -> {
         if (node.move != null) System.out.println(node.move);
       });
+    } else {
+      System.out.print("Board is not solvable!");
     }
   }
 }

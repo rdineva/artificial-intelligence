@@ -9,8 +9,7 @@ public class Node {
   public String move;
   public Node parent;
   public Board board, goal;
-  public int g;
-  public int manhattanDistance;
+  public int g, manhattanDistance;
 
   public Node(Board board, Node parent, Board goal, int g, String move) {
     this.board = board;

@@ -1,6 +1,5 @@
 package com.npuzzle;
 
-import java.util.Arrays;
 import java.util.HashMap;
 
 public class Board {
@@ -67,7 +66,11 @@ public class Board {
 
   private Board getNeighborBoard(int currentZeroRow, int currentZeroCol, int newZeroRow, int newZeroCol) {
     int tile = this.tileAt(newZeroRow, newZeroCol);
-    int[][] copyTiles = Arrays.stream(this.tiles).map(int[]::clone).toArray(int[][]::new);
+    int[][] copyTiles = new int[this.size()][this.size()];
+    for (int i = 0; i < this.size(); i++) {
+      System.arraycopy(this.tiles[i], 0, copyTiles[i], 0, this.size());
+    }
+
     Board neighbor = new Board(copyTiles);
     neighbor.setTileAt(newZeroRow, newZeroCol, 0);
     neighbor.setTileAt(currentZeroRow, currentZeroCol, tile);

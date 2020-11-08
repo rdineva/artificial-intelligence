@@ -6,7 +6,7 @@ The goal is to rearrange the tiles so that they are in row-major order, using as
 You are permitted to slide tiles either horizontally or vertically into the blank square.
 
 ## Solution 
-Used the algorithm ***IDA**** and the heuristic ***Manhattan Distance***.
+Used the ***IDA**** algorithm and the ***Manhattan Distance*** heuristic.
 
 ### Input
 * N - the number of tiles (8, 15, 24, etc.)
@@ -23,17 +23,17 @@ Used the algorithm ***IDA**** and the heuristic ***Manhattan Distance***.
 
 ### Output
 * The number of moves of the optimal solution from the start to the goal board
-* The moves made to get to the goal state (left, right, up and down)
+* The moves made to get to the goal state by moving a tile to the blank space (left, right, up and down)
 
 #### Example
 ```
 8
-left
-left
-up
-up
+right
 right
 down
 down
-right
+left
+up
+up
+left
 ```
