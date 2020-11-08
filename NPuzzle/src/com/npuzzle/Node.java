@@ -1,6 +1,5 @@
 package com.npuzzle;
 
-
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -27,27 +26,26 @@ public class Node {
   public int manhattanDistance() {
     int manhattan = 0;
 
-    for(int goalRow = 0; goalRow < this.size(); goalRow++) {
-      for (int goalCol = 0; goalCol < this.size(); goalCol++) {
-        boolean isFound = false;
-
-        for(int boardRow = 0; boardRow < this.size(); boardRow++) {
-          if (isFound) {
-            break;
-          }
-
-          for (int boardCol = 0; boardCol < this.size(); boardCol++) {
-            if (this.board.tileAt(boardRow, boardCol) != 0 && this.board.tileAt(boardRow, boardCol) == this.goal.tileAt(goalRow, goalCol)) {
-              manhattan += Math.abs(boardRow - goalRow) + Math.abs(boardCol - goalCol);
-              isFound = true;
-              break;
-            }
-          }
-        }
+    for (int row = 0; row < this.size(); row++) {
+      for (int col = 0; col < this.size(); col++) {
+        manhattan += this.getTileDistance(this.board.tileAt(row, col), row, col);
       }
     }
 
     return manhattan;
+  }
+
+  public int getTileDistance(int tileNumber, int tileRow, int tileCol) {
+    if (tileNumber == 0) return 0;
+    tileNumber -= 1;
+
+    if (this.goal.zero != -1 && tileNumber >= this.goal.zero) tileNumber += 1;
+
+    int goalRow = tileNumber / this.size();
+    int goalCol = tileNumber % this.size();
+    int distance = Math.abs(tileRow - goalRow) + Math.abs(tileCol - goalCol);
+
+    return distance;
   }
 
   public ArrayList<Node> neighbors() {

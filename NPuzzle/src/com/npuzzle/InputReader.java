@@ -10,7 +10,8 @@ import static java.lang.System.in;
 public class InputReader {
   public int[][] startBoardTiles, goalBoardTiles;
   private BufferedReader reader;
-  private int n, I, size;
+  private int n, size;
+  public int I;
 
   public InputReader() {
     this.reader = new BufferedReader(new InputStreamReader(in));
@@ -21,13 +22,14 @@ public class InputReader {
     this.I = Integer.parseInt(reader.readLine());
 
     this.size = (int) Math.sqrt(this.n + 1);
+    int IPos = I;
 
     if (I >= this.size || I <= 0) {
-      I = this.size * this.size;
+      IPos = this.size * this.size;
     }
 
     this.startBoardTiles = getStartBoardTiles(this.size);
-    this.goalBoardTiles = getGoalBoardTiles(this.size, I);
+    this.goalBoardTiles = getGoalBoardTiles(this.size, IPos);
   }
 
   private int[][] getGoalBoardTiles(int n, int I) {

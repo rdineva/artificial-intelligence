@@ -12,7 +12,7 @@ public class Main {
     reader.read();
 
     Board startBoard = new Board(reader.startBoardTiles);
-    Board goalBoard = new Board(reader.goalBoardTiles);
+    Board goalBoard = new Board(reader.goalBoardTiles, reader.I);
 
     Node startNode = new Node(startBoard, null, goalBoard, 0, null);
     Node goalNode = new Node(goalBoard, null, goalBoard, 0, null);
@@ -20,7 +20,7 @@ public class Main {
     Solver solver = new Solver(startNode, goalNode);
     boolean isSolvable = solver.isSolvable();
 
-    if (isSolvable) {
+   if (isSolvable) {
       Node solutionNode;
 
       if (solver.isGoal(startNode)) {

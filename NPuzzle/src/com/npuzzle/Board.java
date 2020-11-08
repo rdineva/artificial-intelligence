@@ -5,9 +5,15 @@ import java.util.HashMap;
 public class Board {
 
   public int[][] tiles;
+  int zero;
 
   public Board(int[][] tiles) {
     this.tiles = tiles;
+  }
+
+  public Board(int[][] tiles, int zero) {
+    this.tiles = tiles;
+    this.zero = zero;
   }
 
   public int size() {
