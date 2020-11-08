@@ -20,7 +20,7 @@ public class Main {
     Solver solver = new Solver(startNode, goalNode);
     boolean isSolvable = solver.isSolvable();
 
-   if (isSolvable) {
+    if (isSolvable) {
       Node solutionNode;
 
       if (solver.isGoal(startNode)) {
