@@ -19,7 +19,8 @@ public class Main {
 
     long timeElapsed = Duration.between(start, finish).toSeconds();
     System.out.println("Time elapsed: " + timeElapsed);
-    if (n <= 25) {
+    System.out.println("Moves: " + solver.moves);
+    if (n <= 50) {
       solver.print(solver.solution);
     }
   }

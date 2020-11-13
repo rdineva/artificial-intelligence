@@ -12,8 +12,10 @@ public class Solver {
   public int[] d1Conflicts;
   public int[] d2Conflicts;
   public Random rand = new Random();
+  public int moves;
 
   public Solver(int n) {
+    int moves = 0;
     this.n = n;
     this.queens = new int[n];
     this.solution = new int[n];
@@ -23,16 +25,22 @@ public class Solver {
   }
 
   public void solve() {
-    this.resetData();
-    this.generateBoard();
+    do{
+      this.resetData();
+      this.generateRandomBoard();
+      this.setConflicts();
+      if(!this.hasConflicts()){
+        this.solution = this.queens;
+        break;
+      }
+      this.search();
+    } while(this.hasConflicts());
+  }
 
-    if (!this.hasConflicts()) {
-      this.solution = this.queens;
-      return;
-    }
-
+  public void search() {
     int iter = 0;
     while(iter < this.n) {
+      this.moves++;
       HashMap<String, Integer> colMaxConflictsData = this.getColMaxConflicts();
       int colMaxConflicts = colMaxConflictsData.get("col");
       int currentConflicts = colMaxConflictsData.get("conflicts");
@@ -47,7 +55,7 @@ public class Solver {
       if (currentConflicts == minConflicts) {
         int randomRow;
         do {
-          randomRow = pickRandom(this.n);
+          randomRow = this.pickRandom(this.n);
           newRow = randomRow;
         } while(randomRow == this.queens[colMaxConflicts]);
 
@@ -66,10 +74,6 @@ public class Solver {
       }
 
       iter++;
-    }
-
-    if (this.hasConflicts()) {
-      solve();
     }
   }
 
@@ -120,14 +124,14 @@ public class Solver {
   }
 
   public void setConflicts() {
-    this.rowConflicts = new int[n];
-    this.d1Conflicts = new int[2 * n - 1];
-    this.d2Conflicts = new int[2 * n - 1];
+    this.rowConflicts = new int[this.n];
+    this.d1Conflicts = new int[2 * this.n - 1];
+    this.d2Conflicts = new int[2 * this.n - 1];
 
     for(int i = 0; i < this.n; i++) {
-      this.rowConflicts[queens[i]]++;
+      this.rowConflicts[this.queens[i]]++;
       this.d1Conflicts[this.n - 1 + i - this.queens[i]]++;
-      this.d2Conflicts[queens[i] + i]++;
+      this.d2Conflicts[this.queens[i] + i]++;
     }
   }
 
@@ -138,9 +142,9 @@ public class Solver {
     for(int row = 0; row < this.n; row++) {
       if (row == queenRow) continue;
 
-      int newRowConflicts = (rowConflicts[row] + 1)/2;
-      int newD1Conflicts = (d1Conflicts[this.n - 1 + queenCol - row] + 1)/2;
-      int newD2Conflicts = (d2Conflicts[queenCol + row] + 1)/2;
+      int newRowConflicts = (this.rowConflicts[row] + 1)/2;
+      int newD1Conflicts = (this.d1Conflicts[this.n - 1 + queenCol - row] + 1)/2;
+      int newD2Conflicts = (this.d2Conflicts[queenCol + row] + 1)/2;
       int newConflicts = newRowConflicts + newD1Conflicts + newD2Conflicts;
 
       if (minConflicts == newConflicts) {
@@ -189,32 +193,68 @@ public class Solver {
 
   public void resetData() {
     this.queens = new int[this.n];
-    this.rowConflicts = new int[n];
-    this.d1Conflicts = new int[2 * n - 1];
-    this.d2Conflicts = new int[2 * n - 1];
+    this.rowConflicts = new int[this.n];
+    this.d1Conflicts = new int[2 * this.n - 1];
+    this.d2Conflicts = new int[2 * this.n - 1];
   }
 
-  public void generateBoard() {
-    for(int i = 0; i < n; i++) {
+  public void generateStaircaseBoard() {
+    if (this.n % 6 == 2) {
+      this.set2or3RemainderBoard(this.n - 4, this.n - 3);
+    } else if (this.n % 6 == 3) {
+      this.set2or3RemainderBoard(this.n - 4, this.n - 1);
+    } else {
+      this.setOtherRemainderBoard();
+    }
+  }
+
+  public void generateRandomBoard() {
+    for(int i = 0; i < this.n; i++) {
       this.queens[i] = Integer.MIN_VALUE;
     }
 
     int randomFirstRow = pickRandom(n);
     this.queens[0] = randomFirstRow;
-    addConflicts(0, randomFirstRow);
+    this.addConflicts(0, randomFirstRow);
 
-    for (int i = 1; i < n; i++) {
+    for (int i = 1; i < this.n; i++) {
       var minRowData = findMinRow(i, -1);
       int row = minRowData.get("row");
       this.queens[i] = row;
-      addConflicts(i, row);
+      this.addConflicts(i, row);
+    }
+  }
+
+  public void set2or3RemainderBoard(int firstCount, int secondCount) {
+    for(int i = 0; i < this.n / 2 - 1; i++) {
+      this.queens[i] = firstCount;
+      firstCount -= 2;
+    }
+
+    this.queens[this.n - 1] = this.pickRandom(this.n);
+
+    for(int i = this.n / 2 + 1; i < this.n; i++) {
+      this.queens[i] = secondCount;
+      secondCount -= 2;
+    }
+
+    this.queens[this.n / 2] = this.pickRandom(n);
+  }
+
+  public void setOtherRemainderBoard() {
+    int c = 0;
+
+    for (int i = 0; i < this.n / 2; i++) {
+      this.queens[this.n - 1 - i - this.n / 2] = c;
+      this.queens[this.n - i - 1] = c + 1;
+      c += 2;
     }
   }
 
   public boolean hasConflicts() {
     for(int i = 0; i < this.n; i++) {
       if (i < this.n) {
-        if (this.rowConflicts[queens[i]] > 1) {
+        if (this.rowConflicts[this.queens[i]] > 1) {
           return true;
         }
       }
@@ -228,7 +268,7 @@ public class Solver {
   }
 
   public int pickRandom(int max) {
-    return rand.nextInt(max);
+    return this.rand.nextInt(max);
   }
 
   public void print(int[] queens) {
