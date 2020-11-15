@@ -25,14 +25,16 @@ public class Solver {
   }
 
   public void solve() {
-    do{
-      this.resetData();
-      this.generateRandomBoard();
+    do {
+      this.reset();
+      this.generateStaircaseBoard(); //or for a more randomly generated board use -> this.generateRandomBoard();
       this.setConflicts();
+
       if(!this.hasConflicts()){
         this.solution = this.queens;
         break;
       }
+
       this.search();
     } while(this.hasConflicts());
   }
@@ -41,11 +43,11 @@ public class Solver {
     int iter = 0;
     while(iter < this.n) {
       this.moves++;
-      HashMap<String, Integer> colMaxConflictsData = this.getColMaxConflicts();
+      HashMap<String, Integer> colMaxConflictsData = this.getColumnMaxConflicts();
       int colMaxConflicts = colMaxConflictsData.get("col");
       int currentConflicts = colMaxConflictsData.get("conflicts");
 
-      HashMap<String, Integer> rowMinConflictsData = this.findMinRow(colMaxConflicts, this.queens[colMaxConflicts]);
+      HashMap<String, Integer> rowMinConflictsData = this.findMinConflictsRow(colMaxConflicts, this.queens[colMaxConflicts]);
       int rowMinConflicts = rowMinConflictsData.get("row");
       int minConflicts = rowMinConflictsData.get("conflicts");
 
@@ -94,39 +96,37 @@ public class Solver {
     this.d2Conflicts[col + row]++;
   }
 
-  public HashMap<String, Integer> getColMaxConflicts() {
+  public HashMap<String, Integer> getColumnMaxConflicts() {
     int maxConflicts = Integer.MIN_VALUE;
-    ArrayList<Integer> maxCols = new ArrayList<>();
+    ArrayList<Integer> maxConflictsColumns = new ArrayList<>();
 
     for(int i = 0; i < this.n; i++) {
       int currentConflicts = this.getConflictsForQueen(i, this.queens[i]);
       if (currentConflicts == maxConflicts) {
-        maxCols.add(i);
+        maxConflictsColumns.add(i);
       }
 
       if (currentConflicts > maxConflicts) {
         maxConflicts = currentConflicts;
-        maxCols.clear();
-        maxCols.add(i);
+        maxConflictsColumns.clear();
+        maxConflictsColumns.add(i);
       }
     }
 
-    int colIndex = 0;
-    if (maxCols.size() > 1) {
-      colIndex = this.pickRandom(maxCols.size());
+    int columnIndex = 0;
+    if (maxConflictsColumns.size() > 1) {
+      columnIndex = this.pickRandom(maxConflictsColumns.size());
     }
 
-    int maxCol = maxCols.get(colIndex);
-    HashMap<String, Integer> colMaxConflicts = new HashMap<>();
-    colMaxConflicts.put("col", maxCol);
-    colMaxConflicts.put("conflicts", maxConflicts);
-    return colMaxConflicts;
+    int maxCol = maxConflictsColumns.get(columnIndex);
+    HashMap<String, Integer> columnMaxConflicts = new HashMap<>();
+    columnMaxConflicts.put("col", maxCol);
+    columnMaxConflicts.put("conflicts", maxConflicts);
+    return columnMaxConflicts;
   }
 
   public void setConflicts() {
-    this.rowConflicts = new int[this.n];
-    this.d1Conflicts = new int[2 * this.n - 1];
-    this.d2Conflicts = new int[2 * this.n - 1];
+    this.resetConflicts();
 
     for(int i = 0; i < this.n; i++) {
       this.rowConflicts[this.queens[i]]++;
@@ -135,7 +135,13 @@ public class Solver {
     }
   }
 
-  public HashMap<String, Integer> findMinRow(int queenCol, int queenRow) {
+  public void resetConflicts() {
+    this.rowConflicts = new int[this.n];
+    this.d1Conflicts = new int[2 * this.n - 1];
+    this.d2Conflicts = new int[2 * this.n - 1];
+  }
+
+  public HashMap<String, Integer> findMinConflictsRow(int queenCol, int queenRow) {
     int minConflicts = Integer.MAX_VALUE;
     ArrayList<Integer> minRows = new ArrayList<>();
 
@@ -191,11 +197,9 @@ public class Solver {
     return conflicts;
   }
 
-  public void resetData() {
+  public void reset() {
     this.queens = new int[this.n];
-    this.rowConflicts = new int[this.n];
-    this.d1Conflicts = new int[2 * this.n - 1];
-    this.d2Conflicts = new int[2 * this.n - 1];
+    this.resetConflicts();
   }
 
   public void generateStaircaseBoard() {
@@ -213,12 +217,12 @@ public class Solver {
       this.queens[i] = Integer.MIN_VALUE;
     }
 
-    int randomFirstRow = pickRandom(n);
+    int randomFirstRow = this.pickRandom(this.n);
     this.queens[0] = randomFirstRow;
     this.addConflicts(0, randomFirstRow);
 
     for (int i = 1; i < this.n; i++) {
-      var minRowData = findMinRow(i, -1);
+      var minRowData = this.findMinConflictsRow(i, -1);
       int row = minRowData.get("row");
       this.queens[i] = row;
       this.addConflicts(i, row);
@@ -238,7 +242,7 @@ public class Solver {
       secondCount -= 2;
     }
 
-    this.queens[this.n / 2] = this.pickRandom(n);
+    this.queens[this.n / 2] = this.pickRandom(this.n);
   }
 
   public void setOtherRemainderBoard() {
@@ -259,7 +263,7 @@ public class Solver {
         }
       }
 
-      if (this.d1Conflicts[this.n - 1 + i - this.queens[i]] > 1 || this.d2Conflicts[queens[i] + i] > 1) {
+      if (this.d1Conflicts[this.n - 1 + i - this.queens[i]] > 1 || this.d2Conflicts[this.queens[i] + i] > 1) {
         return true;
       }
     }
