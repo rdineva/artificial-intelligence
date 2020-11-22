@@ -1,92 +1,124 @@
 package com.TravellingSalesmanProblem;
 
-import java.util.Arrays;
-import java.util.Random;
+import java.util.*;
 
 public class Solver {
-  public int genesCount, k;
+  public int genesCount, sampleNumber;
   public Random random = new Random();
   Population population;
 
   public Solver(int n) {
     this.genesCount = n;
-    this.k = n/3;
-    if (this.k % 2 != 0) this.k--;
-    this.population = new Population(n);
+    this.sampleNumber = n/2;
+    if (this.sampleNumber % 2 != 0) {
+      this.sampleNumber--;
+    }
+
+    this.population = new Population(n, sampleNumber);
   }
 
   public void start() {
-    long iter = 1;
+    int generation = 0;
+    int maxGenerations = this.genesCount * 10;
+    int sameBestFitnessCount = 0;
+    boolean randomSearch = false;
+    ArrayList<Integer> generationsToPrint = this.pickGenerationsToPrint(maxGenerations);
 
-    while(iter <= this.genesCount * 100) {
-      System.out.printf("%d generation fittest with fitness: %n", iter);
-      Individual fittest = this.population.fittest();
-      fittest.print();
+    while(generation < maxGenerations) {
+      generation++;
+      Individual fittestBeforeSearch = this.population.fittest();
 
-      search();
-      iter++;
+      if (generation == 10 || generationsToPrint.contains(generation)) {
+        this.printGenerationFittest(generation);
+      }
+
+      search(randomSearch);
+
+      Individual fittestAfterSearch = this.population.fittest();
+      if (fittestBeforeSearch.fitness == fittestAfterSearch.fitness) {
+        sameBestFitnessCount++;
+      } else {
+        sameBestFitnessCount = 0;
+      }
+
+      if (sameBestFitnessCount > 10) {
+        randomSearch = true;
+        this.randomMutate();
+      } else {
+        randomSearch = false;
+      }
     }
 
-    System.out.printf("%d generation fittest with fitness: %n", iter);
-    this.population.fittest().print();
+    this.printGenerationFittest(generation);
   }
 
-  public void search() {
-    Individual[] parents = this.getFittestParents();
-    Individual[] children = new Individual[this.k];
+  public void randomMutate() {
+    for(int i = 0; i < Math.sqrt(this.genesCount); i++) {
+      int randomIndex = this.generateRandomNumber(this.population.populationCount);
+      this.population.individuals.set(randomIndex, this.mutate(this.population.individuals.get(randomIndex)));
+    }
+  }
 
-    for(int i = 0; i < this.k - 1; i+=2) {
+  public void printGenerationFittest(int generation) {
+    System.out.println("Generation " + generation + " fittest: " + this.population.fittest().fitness);
+  }
+
+  public ArrayList<Integer> pickGenerationsToPrint(int maxGenerations) {
+    ArrayList<Integer> generationsToPrint = new ArrayList<>();
+
+    for(int i = 0; i < 3; i++) {
+      int randomNumber = this.generateRandomNumber(maxGenerations - 1);
+      while (randomNumber <= 10) {
+        randomNumber = this.generateRandomNumber(maxGenerations - 1);
+      }
+
+      generationsToPrint.add(randomNumber);
+    }
+
+    return generationsToPrint;
+  }
+
+  public void search(boolean randomSearch) {
+    Individual[] parents;
+    if(randomSearch) {
+      parents = this.population.getRandomFittestParents();
+    } else {
+      parents = this.population.getFittestParents();
+    }
+
+    Individual[] children = new Individual[this.sampleNumber];
+    int mutateCounter = 0;
+
+    for(int i = 0; i < this.sampleNumber - 1; i+=2) {
       Individual[] crossoverChildren = this.crossover(parents[i], parents[i + 1]);
 
-      crossoverChildren[0] = this.mutate(crossoverChildren[0]);
-      crossoverChildren[1] = this.mutate(crossoverChildren[1]);
+      if (mutateCounter == 0) {
+        crossoverChildren[0] = this.mutate(crossoverChildren[0]);
+        crossoverChildren[1] = this.mutate(crossoverChildren[1]);
+      }
 
       crossoverChildren[0].setFitness();
       crossoverChildren[1].setFitness();
 
       children[i] = crossoverChildren[0];
       children[i + 1] = crossoverChildren[1];
+      mutateCounter++;
+      if (mutateCounter == 3) mutateCounter = 0;
     }
 
-    this.survivorSelection(children);
+    this.survivorSelection(children, randomSearch);
   }
 
-  public Individual[] getFittestParents() {
-    Individual[] parents = new Individual[this.k];
+  public void survivorSelection(Individual[] children, boolean randomSearch) {
+    Individual[] unfitParents;
 
-    for(int i = 0; i < this.k; i++) {
-      Individual mostFitParent = this.findFittestIndividual();
-
-      while(Arrays.asList(parents).contains(mostFitParent)) {
-        mostFitParent = this.findFittestIndividual();
-      }
-
-      parents[i] = mostFitParent;
+    if (randomSearch) {
+      unfitParents = this.population.getRandomUnfitParents();
+    } else {
+      unfitParents = this.population.getUnfitParents();
     }
 
-    return parents;
-  }
-
-  public Individual[] getUnfitParents() {
-    Individual[] parents = new Individual[this.k];
-
-    for(int i = 0; i < this.k; i++) {
-      Individual unfitParent = this.findUnfitIndividual();
-
-      while(Arrays.asList(parents).contains(unfitParent)) {
-        unfitParent = this.findUnfitIndividual();
-      }
-
-      parents[i] = unfitParent;
-    }
-
-    return parents;
-  }
-
-  public void survivorSelection(Individual[] children) {
-    Individual[] unfitParents = this.getUnfitParents();
-
-    for(int i = 0; i < this.k; i++) {
+    for(int i = 0; i < this.sampleNumber; i++) {
       int parentIndex = this.population.individuals.indexOf(unfitParents[i]);
       this.population.individuals.set(parentIndex, children[i]);
     }
@@ -101,6 +133,7 @@ public class Solver {
     }
 
     individual.swapGenes(firstGeneIndex, secondGeneIndex);
+
     return individual;
   }
 
@@ -108,18 +141,10 @@ public class Solver {
     Individual firstChild = new Individual(this.genesCount);
     Individual secondChild = new Individual(this.genesCount);
 
-    int firstRandomPoint = this.generateRandomNumber(this.genesCount);
-    while(firstRandomPoint == 0 || firstRandomPoint == this.genesCount - 1) {
-      firstRandomPoint = this.generateRandomNumber(this.genesCount);
-    }
+    int[] crossoverPoints = this.getCrossoverPoints();
 
-    int secondRandomPoint = this.generateRandomNumber(this.genesCount);
-    while(secondRandomPoint == 0 || secondRandomPoint == this.genesCount - 1 || secondRandomPoint == firstRandomPoint) {
-      secondRandomPoint = this.generateRandomNumber(this.genesCount);
-    }
-
-    int firstCrossoverPoint = Math.min(firstRandomPoint, secondRandomPoint);
-    int secondCrossoverPoint = Math.max(firstRandomPoint, secondRandomPoint);
+    int firstCrossoverPoint = Math.min(crossoverPoints[0], crossoverPoints[1]);
+    int secondCrossoverPoint = Math.max(crossoverPoints[0], crossoverPoints[1]);
 
     for(int i = firstCrossoverPoint; i <= secondCrossoverPoint; i++) {
       firstChild.chromosome[i] = secondParent.chromosome[i];
@@ -130,6 +155,20 @@ public class Solver {
     secondChild = this.setChild(secondChild, firstParent, secondCrossoverPoint);
 
     return new Individual[] { firstChild, secondChild };
+  }
+
+  public int[] getCrossoverPoints() {
+    int firstRandomPoint = this.generateRandomNumber(this.genesCount);
+    while(firstRandomPoint == 0 || firstRandomPoint == this.genesCount - 1) {
+      firstRandomPoint = this.generateRandomNumber(this.genesCount);
+    }
+
+    int secondRandomPoint = this.generateRandomNumber(this.genesCount);
+    while(secondRandomPoint == 0 || secondRandomPoint == this.genesCount - 1 || secondRandomPoint == firstRandomPoint) {
+      secondRandomPoint = this.generateRandomNumber(this.genesCount);
+    }
+
+    return new int[] { firstRandomPoint, secondRandomPoint };
   }
 
   public Individual setChild(Individual child, Individual parent, int secondCrossoverPoint) {
@@ -161,36 +200,6 @@ public class Solver {
     }
 
     return index;
-  }
-
-  public Individual findUnfitIndividual() {
-    Individual[] randomIndividuals = this.population.selectRandomIndividuals(this.k);
-    Individual mostUnfit = randomIndividuals[0];
-
-    for(int i = 1; i < this.k; i++) {
-      Individual currentIndividual = randomIndividuals[i];
-
-      if (currentIndividual.fitness > mostUnfit.fitness) {
-        mostUnfit = currentIndividual;
-      }
-    }
-
-    return mostUnfit;
-  }
-
-  public Individual findFittestIndividual() {
-    Individual[] randomIndividuals = this.population.selectRandomIndividuals(this.k);
-    Individual fittest = randomIndividuals[0];
-
-    for(int i = 1; i < this.k; i++) {
-      Individual currentIndividual = randomIndividuals[i];
-
-      if (currentIndividual.fitness < fittest.fitness) {
-        fittest = currentIndividual;
-      }
-    }
-
-    return fittest;
   }
 
   private int generateRandomNumber(int max) {

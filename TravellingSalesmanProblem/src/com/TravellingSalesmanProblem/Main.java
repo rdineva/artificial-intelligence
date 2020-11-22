@@ -11,7 +11,6 @@ public class Main {
     int n = Integer.valueOf(reader.readLine());
 
     Solver solver = new Solver(n);
-    solver.population.generateInitialPopulation();
     solver.start();
   }
 }
