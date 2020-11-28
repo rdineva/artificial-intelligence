@@ -17,8 +17,10 @@ public class Game {
   public int takenBoardCells = 0;
   public int computer = MIN;
   public int human = MAX;
+  public int maxDepth = TOTAL_BOARD_CELLS - this.takenBoardCells;
 
   public void start() throws IOException {
+    System.out.println("Computer plays with 'o' and you play with 'x'.");
     System.out.println("Who should play first - human or computer? By default human is always first.");
     System.out.print("Insert '-h' for human and '-c' for computer: ");
     BufferedReader reader = new BufferedReader(new InputStreamReader(in));
@@ -37,23 +39,23 @@ public class Game {
   }
 
   private boolean gameOver() {
-    return this.checkWinner(this.computer) || this.checkWinner(this.human);
+    return this.checkWinner(this.computer) || this.checkWinner(this.human) || this.takenBoardCells == TOTAL_BOARD_CELLS;
   }
 
   private void humanMove() throws IOException {
-    if (this.checkWinner(this.computer)) {
+    if (this.gameOver()) {
       return;
     }
 
-    int x, y;
+    int row, col;
     do {
       System.out.print("Your turn: ");
       int[] move = this.readMove();
-      x = move[0];
-      y = move[1];
-    } while(this.board[x - 1][y - 1] != EMPTY_CELL);
+      row = move[0];
+      col = move[1];
+    } while(this.board[row - 1][col - 1] != EMPTY_CELL);
 
-    this.board[x - 1][y - 1] = this.human;
+    this.board[row - 1][col - 1] = this.human;
     this.takenBoardCells++;
     this.printBoard();
   }
@@ -65,57 +67,67 @@ public class Game {
   }
 
   private void computerMove() {
-    if (this.checkWinner(this.human)) {
+    if (this.gameOver()) {
       return;
     }
 
-    int depth = TOTAL_BOARD_CELLS - this.takenBoardCells;
-    int[] result = this.minimax(this.board, depth, this.computer);
-    int xMove =  result[1];
-    int yMove = result[2];
+    int depth = 0;
+    int alpha = Integer.MIN_VALUE;
+    int beta = Integer.MAX_VALUE;
 
-    this.board[xMove][yMove] = this.computer;
+    int[] result = this.minimax(this.board, depth, this.computer, alpha, beta);
+    int row =  result[1];
+    int col = result[2];
+
+    this.board[row][col] = this.computer;
     this.takenBoardCells++;
     System.out.println("Computer:");
     this.printBoard();
   }
 
-  public int[] minimax(int[][] board, int depth, int player) {
-    if (this.gameOver() || depth == 0) {
+  public int[] minimax(int[][] board, int depth, int player, int alpha, int beta) {
+    if (this.gameOver() || depth == this.maxDepth) {
       int score = this.evaluateBoard();
-      return new int[] { score, -1, -1 };
+      return new int[] { score, -1, -1, this.maxDepth - depth };
     }
 
     int[] best;
     if (player == MAX) {
-      best = new int[] { Integer.MIN_VALUE, -1, -1 };
+      best = new int[] { Integer.MIN_VALUE, -1, -1, this.maxDepth - depth };
     } else {
-      best = new int[] { Integer.MAX_VALUE, -1, -1 };
+      best = new int[] { Integer.MAX_VALUE, -1, -1, depth - this.maxDepth };
     }
 
     ArrayList<Cell> emptyCells = this.getEmptyCells();
 
     for(Cell cell : emptyCells) {
-      int x = cell.row;
-      int y = cell.col;
+      int row = cell.row;
+      int col = cell.col;
 
-      board[x][y] = player;
-      int[] result = minimax(board, depth - 1, -player);
-      board[x][y] = EMPTY_CELL;
+      board[row][col] = player;
+      int[] result = minimax(board, depth + 1, -player, alpha, beta);
+      board[row][col] = EMPTY_CELL;
+
       int move = result[0];
+      int resultDepth = result[3];
       int bestMove = best[0];
+      int bestDepth = best[0];
 
       if (player == MAX) {
-        if (move > bestMove) {
-          bestMove = move;
-          best = new int[] { bestMove, x, y };
+        if (move > bestMove || (move == bestMove && resultDepth < bestDepth)) {
+          best = new int[] { move, row, col, resultDepth };
         }
+
+        alpha = Math.max(alpha, best[0]);
       } else {
-        if (move < bestMove) {
-          bestMove = move;
-          best = new int[] { bestMove, x, y };
+        if (move < bestMove || (move == bestMove && resultDepth > bestDepth)) {
+          best = new int[] { move, row, col, resultDepth };
         }
+
+        beta = Math.min(beta, best[0]);
       }
+
+      if (alpha >= beta) break;
     }
 
     return best;
@@ -188,7 +200,12 @@ public class Game {
   private void printBoard() {
     for(int row = 0; row < 3; row++) {
       for(int col = 0; col < 3; col++) {
-        System.out.print(this.board[row][col] + " ");
+        char player = this.board[row][col] == this.computer ? 'o' : 'x';
+        char move = this.board[row][col] == EMPTY_CELL ? '-' : player;
+        System.out.printf(" %s ", move);
+        if (col != 2) {
+          System.out.print("|");
+        }
       }
 
       System.out.println();
