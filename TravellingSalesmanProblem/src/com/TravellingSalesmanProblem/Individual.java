@@ -28,8 +28,4 @@ public class Individual {
     this.chromosome[firstGeneIndex] = this.chromosome[secondGeneIndex];
     this.chromosome[secondGeneIndex] = gene;
   }
-
-  public void print() {
-    System.out.println(" " + this.fitness);
-  }
 }

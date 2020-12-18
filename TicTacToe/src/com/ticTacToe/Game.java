@@ -100,7 +100,7 @@ public class Game {
   }
 
   /**
-   * Reads a input from the console, splits it by spaces and maps it to integers.
+   * Reads an input from the console, splits it by spaces and maps it to integers.
    *
    * @return int[] numbers read from the console
    * @throws IOException
