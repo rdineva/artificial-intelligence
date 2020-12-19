@@ -1,29 +1,10 @@
 import numpy as np
+import random 
 from math import sqrt, pi, exp, log
+from itertools import chain 
+from random import randrange
 
-labels = [
-  'handicapped-infants',
-  'water-project-cost-sharing',
-  'adoption-of-the-budget-resolution',
-  'physician-fee-freeze',
-  'el-salvador-aid',
-  'religious-groups-in-schools',
-  'anti-satellite-test-ban',
-  'aid-to-nicaraguan-contras',
-  'mx-missile',
-  'immigration',
-  'synfuels-corporation-cutback',
-  'education-spending',
-  'superfund-right-to-sue',
-  'crime',
-  'duty-free-exports',
-  'export-administration-act-south-africa'
-]
-
-N_folds = 10
-num_rows = 435
-
-def get_folds():
+def get_dataset():
   file = open('house-votes-84.data')
   file_lines = file.readlines()
   dataset = []
@@ -32,14 +13,7 @@ def get_folds():
     attributes = line.strip('\n').split(',')
     dataset.append(attributes)
 
-  limits = np.linspace(0, num_rows+1, N_folds+1, dtype=int)
-
-  folds = []
-
-  for i in range(len(limits) - 1):
-    folds += [dataset[limits[i] : limits[i+1]]]
-
-  return folds  
+  return dataset
 
 def to_numbers(data): 
   for i in range(len(data)):
@@ -52,9 +26,9 @@ def to_numbers(data):
 
   return data 
 
-def gaussian_probability(x, mean, standard_deviation):
-  exponent = exp(-((x-mean)**2 / (2 * standard_deviation**2 )))
-  return (1 / (sqrt(2 * pi) * standard_deviation)) * exponent
+def gaussian_probability(x, mean, stdev):
+  exponential = exp(-(pow(x-mean, 2)/(2*pow(stdev, 2) )))
+  return (1/(sqrt(2*pi)*stdev))*exponential
 
 def train(dataset):
   dataset_by_class = dict({'democrat': [], 'republican': []})
@@ -77,62 +51,89 @@ def predict_probabilities(summaries, row, total_rows):
   
   for class_value, class_summaries in summaries.items():
     class_probability = summaries[class_value][0][2]/float(total_rows)
-    probability = 1
-    gaussian_probabilities_product = 1
+    probability = 0
+    gaussian_probabilities_sum = 0
   
     for i in range(len(class_summaries)):
       mean, stdev, _count = class_summaries[i]
-      gaussian_probabilities_product *= gaussian_probability(row[i], mean, stdev)
-      probability = log(class_probability) + log(gaussian_probabilities_product)
+      gaussian_probabilities_sum += log(gaussian_probability(row[i], mean, stdev))
+      probability = log(class_probability) + gaussian_probabilities_sum
 
     probabilities[class_value] = probability
   
   return probabilities
 
 def predict(summaries, dataset, total_rows):
+  predictions = []
+
+  for row in dataset:
+    predicted_probabilities = predict_probabilities(summaries, row[1:17], total_rows) 
+    prediction = {k:v for k,v in predicted_probabilities.items() if v == max(predicted_probabilities.values())}
+    predictions.append(prediction)
+
+  return predictions
+
+def predictions_accuracy(accurates, predictions):
   correct = 0
   incorrect = 0
 
-  for row in dataset:
-    real_class = row[0]
-    del(row[0])
-    
-    predicted_probabilities = predict_probabilities(summaries, row, total_rows) 
-    prediction = {k:v for k,v in predicted_probabilities.items() if v == max(predicted_probabilities.values())}
+  for accurate, prediction in zip(accurates, predictions):
+    accurate_class = accurate[0]
     predicted_class = list(prediction.keys())[0]
 
-    if predicted_class == real_class:
+    if predicted_class == accurate_class:
       correct+=1
     else:
       incorrect+=1
 
-  print('Accuracy:', accuracy(correct, incorrect))
+  return correct/float(correct+incorrect)
 
-def accuracy(correct, incorrect):
-  return correct/float(correct+incorrect)*100
-
-def normalize_data(folds):
+def folds_to_dataset(folds):
   dataset = sum(folds, [])
   for i in range(len(dataset)):
     dataset[i] = to_numbers(dataset[i])
 
   return dataset
 
-# def cross_validation_split(dataset, n_folds)
+def cross_validation_split(dataset, n_folds):
+  dataset_copy = list(dataset)
+  folds = []
+  fold_size = int(len(dataset_copy)/n_folds)
+
+  for _ in range(n_folds):
+    sample = random.sample(dataset_copy, fold_size)
+    folds.append(sample)
+    for x in sample:
+      dataset_copy.remove(x)
+
+  return folds
+
+def naive_bayes(train_dataset, test_dataset):
+  summaries = train(train_dataset)
+  predictions = predict(summaries, test_dataset, len(train_dataset))
+  accuracy = predictions_accuracy(test_dataset, predictions)
+
+  return accuracy
 
 def main():
-  folds = get_folds()
-  
-  training_folds = folds[1:10]
-  train_dataset = normalize_data(training_folds)
+  n_folds = 10
+  dataset = get_dataset()
+  folds = cross_validation_split(dataset, n_folds)
+  accuracies = []
 
-  test_fold = folds[0]
-  test_dataset = normalize_data([test_fold])
+  for fold in folds:
+    train_folds = list(folds)
+    train_folds.remove(fold)
+    train_dataset = folds_to_dataset(train_folds)
 
-  summaries = train(train_dataset)
-  print(summaries)
+    test_fold = fold
+    test_dataset = folds_to_dataset([test_fold])
 
-  predict(summaries, test_dataset, len(train_dataset))
+    accuracy = naive_bayes(train_dataset, test_dataset)
+    print('Accuracy:', accuracy)
+    accuracies.append(accuracy)
+
+  print('Mean of accuracies:', np.mean(accuracies))
 
 if __name__== "__main__":
   main()
