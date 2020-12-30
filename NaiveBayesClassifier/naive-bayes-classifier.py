@@ -4,7 +4,7 @@ from math import sqrt, pi, exp, log
 from itertools import chain 
 from random import randrange
 
-def get_dataset():
+def read_data():
   file = open('house-votes-84.data')
   file_lines = file.readlines()
   dataset = []
@@ -27,7 +27,7 @@ def to_numbers(data):
   return data 
 
 def gaussian_probability(x, mean, stdev):
-  exponential = exp(-(pow(x-mean, 2)/(2*pow(stdev, 2) )))
+  exponential = exp(-(pow(x-mean, 2)/(2*pow(stdev, 2))))
   return (1/(sqrt(2*pi)*stdev))*exponential
 
 def train(dataset):
@@ -75,7 +75,6 @@ def predict(summaries, dataset, total_rows):
 
 def predictions_accuracy(accurates, predictions):
   correct = 0
-  incorrect = 0
 
   for accurate, prediction in zip(accurates, predictions):
     accurate_class = accurate[0]
@@ -83,10 +82,8 @@ def predictions_accuracy(accurates, predictions):
 
     if predicted_class == accurate_class:
       correct+=1
-    else:
-      incorrect+=1
 
-  return correct/float(correct+incorrect)
+  return correct/float(len(predictions))
 
 def folds_to_dataset(folds):
   dataset = sum(folds, [])
@@ -117,7 +114,7 @@ def naive_bayes(train_dataset, test_dataset):
 
 def main():
   n_folds = 10
-  dataset = get_dataset()
+  dataset = read_data()
   folds = cross_validation_split(dataset, n_folds)
   accuracies = []
 
