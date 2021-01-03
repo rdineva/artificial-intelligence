@@ -61,17 +61,17 @@ def class_entropy(df):
 
 def information_gain(df, attributes, attribute):
 	attribute_values = df[attribute].unique()
-	total_rows_count = df.shape[0]
 	gain = class_entropy(df)
 
 	for value in attribute_values:
 		probabilities = []
 		attribute_rows = df.loc[df[attribute] == value]
-		
+		attribute_rows_count = attribute_rows.shape[0]
+
 		for class_value in classes:
 			class_attribute_rows = attribute_rows.loc[attribute_rows['Class'] == class_value]
 			rows_count = class_attribute_rows.shape[0]
-			probability = rows_count/total_rows_count
+			probability = rows_count/attribute_rows_count
 			probabilities.append(probability) 
 
 		gain -= get_entropy(probabilities)
@@ -152,20 +152,16 @@ def predict(row, attributes, root):
 
 	return node.classification
 
-def get_predictions(df, root):
-	predictions = []
+def get_predictions_accuracy(df, root):
+	correct = 0
+	
 	for _index, row in df.iterrows():
+		real_class = row['Class']
 		prediction = predict(row, attribute_names(), root)
-		predictions.append(prediction)
+		if real_class == prediction:
+			correct+=1
 
-	return predictions
-
-def get_accuracy(accurates, predictions):
-  correct = 0
-  for accurate, prediction in zip(accurates, predictions):
-    if prediction == accurate:
-      correct+=1
-  return correct/float(len(predictions))
+	return correct/float(df.shape[0])
 
 def main():
 	data = read_data()
@@ -173,13 +169,9 @@ def main():
 	set_attributes(df)
 	train = df.sample(frac=0.8)
 	test = df.drop(train.index)
-	root = id3(train, attribute_names())
-	predictions = get_predictions(train, root)
-	
-	accurates = test['Class']
-	accuracy = get_accuracy(accurates, predictions)
+	root = id3(test, attribute_names())
+	accuracy = get_predictions_accuracy(train, root)
 	print(accuracy)
-	
 
 if __name__== "__main__":
 	main()
