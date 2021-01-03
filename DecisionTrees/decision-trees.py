@@ -1,6 +1,7 @@
 import math
 import pandas as pd 
 import random
+import numpy as np
 
 column_names = [
 	'Class',
@@ -18,6 +19,8 @@ column_names = [
 classes = ['no-recurrence-events', 'recurrence-events']
 
 attributes = dict()
+
+K = 4
 
 class Node(object):
 	def __init__(self, attribute=None, branches=[], classification=None):
@@ -109,11 +112,7 @@ def has_same_class(df):
 def id3(df, allowed_attributes):
 	root = Node()
 
-	if has_same_class(df):
-		classification = max_class(df)
-		root.classification = classification
-		return root
-	elif len(allowed_attributes) == 0:
+	if has_same_class(df) or len(allowed_attributes) == 0 or df.shape[0] <= K:
 		classification = max_class(df)
 		root.classification = classification
 		return root
@@ -154,7 +153,6 @@ def predict(row, attributes, root):
 
 def get_predictions_accuracy(df, root):
 	correct = 0
-	
 	for _index, row in df.iterrows():
 		real_class = row['Class']
 		prediction = predict(row, attribute_names(), root)
@@ -163,15 +161,38 @@ def get_predictions_accuracy(df, root):
 
 	return correct/float(df.shape[0])
 
+def split_folds(df):
+	folds = []
+	fold_size = int(df.shape[0]/10)
+
+	for i in range(10):
+		rows = df.sample(n=fold_size)
+		folds.append(rows)
+		for index, row in folds[i].iterrows():
+			df.drop(index)
+
+	return folds
+
 def main():
 	data = read_data()
 	df = pd.DataFrame(data, columns=column_names)
 	set_attributes(df)
-	train = df.sample(frac=0.8)
-	test = df.drop(train.index)
-	root = id3(test, attribute_names())
-	accuracy = get_predictions_accuracy(train, root)
-	print(accuracy)
+	folds = split_folds(df)
+	accuracies = []
+
+	for index, fold in enumerate(folds):
+		train_folds = list(folds)
+		del train_folds[index]
+		test = fold.copy()
+		train = pd.concat(train_folds)
+	
+		root = id3(train, attribute_names())
+		accuracy = get_predictions_accuracy(test, root)
+		print('Accuracy:', accuracy)
+		accuracies.append(accuracy)
+
+	print('Mean of accuracies:', np.mean(accuracies))
+
 
 if __name__== "__main__":
 	main()
