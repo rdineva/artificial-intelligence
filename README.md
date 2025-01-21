@@ -3,7 +3,7 @@ Coursework done as part of the Artificial Intelligence Course @ Sofia University
 
 The following solutions were implemented using different Artificial Intelligence algorithms.
 
-- [Decision Trees](https://github.com/rdineva/artificial-intelligence/tree/main/DecisionTrees) - implements the ID3 algorithm for decision tree classification, using cross-validation to evaluate its accuracy on a breast cancer dataset. Solves the problem of classifying recurrence and non-recurrence events based on patient attributes
+- [Decision Tree Classification for Breast Cancer](https://github.com/rdineva/artificial-intelligence/tree/main/DecisionTrees) - implements the ID3 algorithm for decision tree classification, using cross-validation to evaluate its accuracy on a breast cancer dataset. Solves the problem of classifying recurrence and non-recurrence events based on patient attributes
 
 - [Tic Tac Toe Game](https://github.com/rdineva/artificial-intelligence/tree/main/TicTacToe#tic-tac-toe) - implements a console-based Tic Tac Toe game where a player competes against the computer. The computer uses the Minimax algorithm with alpha-beta pruning to determine the optimal moves. It ensures competitive gameplay and provides feedback on the game's outcome.
 
