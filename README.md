@@ -16,4 +16,4 @@ The following solutions were implemented using different Artificial Intelligence
 - [N Pruzzle Problem](https://github.com/rdineva/artificial-intelligence/tree/main/NPuzzle#n-puzzle) - implements a solution for the N-Puzzle problem using the Iterative Deepening A* (IDA*) search algorithm. It focuses on finding the shortest path from a given start board to the goal board, verifying solvability, and using Manhattan distance as the heuristic for efficient pathfinding.
 
 
-More information about each one can be found in each subfolder's README for the corresponding problem. 
+More information can be found in each subfolder's README for the corresponding problem. 
